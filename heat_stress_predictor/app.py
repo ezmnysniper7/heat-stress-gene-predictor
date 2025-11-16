@@ -18,6 +18,11 @@ from pathlib import Path
 import plotly.graph_objects as go
 import plotly.express as px
 import io
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.svm import SVC
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 
 
 # Page configuration
@@ -27,6 +32,83 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+
+def generate_models():
+    """Generate and train models from synthetic data."""
+    np.random.seed(42)
+
+    n_samples = 2000
+    n_responsive = 800
+    n_non_responsive = n_samples - n_responsive
+
+    # Generate features
+    log2FC = np.concatenate([
+        np.random.normal(2.0, 0.8, n_responsive),
+        np.random.normal(0.0, 0.5, n_non_responsive)
+    ])
+
+    neg_log10_pvalue = np.concatenate([
+        np.random.exponential(5.0, n_responsive) + 2,
+        np.random.exponential(1.0, n_non_responsive)
+    ])
+
+    baseMean = np.concatenate([
+        np.random.lognormal(6.5, 1.0, n_responsive),
+        np.random.lognormal(6.0, 1.2, n_non_responsive)
+    ])
+
+    gene_length = np.random.lognormal(7.5, 0.8, n_samples)
+    GC_content = np.random.beta(5, 5, n_samples)
+
+    # Create labels
+    p_value = 10 ** (-neg_log10_pvalue)
+    labels = ((log2FC > 1.0) & (p_value < 0.05)).astype(int)
+
+    # Create DataFrame
+    data = pd.DataFrame({
+        'log2FC': log2FC,
+        'neg_log10_pvalue': neg_log10_pvalue,
+        'baseMean': baseMean,
+        'gene_length': gene_length,
+        'GC_content': GC_content,
+        'label': labels
+    })
+
+    feature_columns = ['log2FC', 'neg_log10_pvalue', 'baseMean', 'gene_length', 'GC_content']
+    X = data[feature_columns]
+    y = data['label']
+
+    # Split data
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.3, random_state=42, stratify=y
+    )
+
+    # Scale features
+    scaler_lr = StandardScaler()
+    scaler_svm = StandardScaler()
+
+    X_train_scaled_lr = scaler_lr.fit_transform(X_train)
+    X_train_scaled_svm = scaler_svm.fit_transform(X_train)
+
+    # Train models
+    rf_model = RandomForestClassifier(n_estimators=100, max_depth=10, random_state=42, n_jobs=-1)
+    rf_model.fit(X_train, y_train)
+
+    lr_model = LogisticRegression(solver='liblinear', random_state=42)
+    lr_model.fit(X_train_scaled_lr, y_train)
+
+    svm_model = SVC(kernel='rbf', probability=True, random_state=42)
+    svm_model.fit(X_train_scaled_svm, y_train)
+
+    return {
+        'rf': rf_model,
+        'lr': lr_model,
+        'svm': svm_model,
+        'scaler_lr': scaler_lr,
+        'scaler_svm': scaler_svm,
+        'features': feature_columns
+    }
 
 
 @st.cache_resource
@@ -57,8 +139,9 @@ def load_models(models_dir='models'):
             'features': feature_columns
         }
     except Exception as e:
-        st.error(f"Error loading models: {e}")
-        st.stop()
+        # Models not found, generate them on-the-fly
+        st.info("Training models... This may take a moment on first load.")
+        return generate_models()
 
 
 def predict_gene(features_dict, models):
