@@ -1,0 +1,20 @@
+# Heat Stress Gene Predictor - Python Dependencies
+# Install with: pip install -r requirements.txt
+
+# Core ML and Data Science
+numpy>=1.26.4
+pandas>=2.3.3
+scikit-learn>=1.7.2
+scipy>=1.16.3
+joblib>=1.4.0
+
+# Visualization
+matplotlib>=3.10.7
+seaborn>=0.13.2
+
+# Streamlit Dashboard
+streamlit>=1.32.0
+plotly>=5.19.0
+
+# Additional utilities
+argparse  # Built-in, but listed for completeness

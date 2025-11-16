@@ -1,0 +1,27 @@
+# Core dependencies for Heat Stress Gene Prediction project
+# Install with: pip install --user -r requirements.txt
+# The --user flag installs to your user directory to avoid permission errors
+
+# Data manipulation
+pandas>=2.3.0
+numpy>=1.26.0
+
+# Machine learning
+scikit-learn>=1.7.0
+scipy>=1.16.0
+
+# Visualization
+matplotlib>=3.10.0
+seaborn>=0.13.0
+
+# Network analysis
+networkx>=3.5
+
+# Jupyter notebook
+jupyter>=1.1.0
+notebook>=7.4.0
+ipykernel>=6.29.0
+
+# Optional: Advanced ML and interpretation (can skip if needed)
+# xgboost>=3.1.0
+# shap>=0.50.0
